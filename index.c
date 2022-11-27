@@ -3,17 +3,40 @@
 #include <stdlib.h>
 #include "utils.h"
 
+int RACKET_WIDTH = 20;
+int RACKET_HEIGHT = 160;
+
+int BALL_SIZE = 20;
+
+int DISPLAY_WIDTH = 600;
+int DISPLAY_HEIGHT = 500;
+
+int FRAMERATE = 20;
+
+void set_ball(Ball *ball) {
+    ball->x = (DISPLAY_WIDTH / 2) - (BALL_SIZE / 2);
+    ball->y = (DISPLAY_HEIGHT /2) - (BALL_SIZE / 2);
+    ball->vel_x = (rand() % 2) == 1 ? 10 : -10;
+    ball->vel_y = (rand() % 2) == 1 ? 10 : -10;
+}
+
+void set_racket(Racket *racket, bool is_player) {
+    if (is_player) {
+        racket->x = 0;
+    } else {
+        racket->x = (DISPLAY_WIDTH - RACKET_WIDTH);
+    }
+    // Centralizes Rackets vertically
+    racket->y = (DISPLAY_HEIGHT / 2) - (RACKET_HEIGHT / 2);
+    
+    // Gives Racket a random initial direction
+    racket->vel = rand() % 2 == 1 ? 10 : -10;
+}
+
 int main() {
+    
     // Initialize rand()
     srand(time(NULL));
-
-    int RACKET_WIDTH = 20;
-    int RACKET_HEIGHT = 160;
-
-    int DISPLAY_WIDTH = 600;
-    int DISPLAY_HEIGHT = 600;
-
-    int FRAMERATE = 30;
 
     al_init();
     al_init_primitives_addon();
@@ -27,23 +50,19 @@ int main() {
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_keyboard_event_source());
 
+    al_set_window_title(display, "Pong");
+
     ALLEGRO_EVENT e;
     
     bool redraw = true;
 
     Racket player, computer;
-    player.x = 0;
+    set_racket(&player, true);
+    set_racket(&computer, false);
 
-    // Puts Racket on the Right side of the screen
-    computer.x = (DISPLAY_WIDTH - RACKET_WIDTH);
-    
-    // Centralizes Rackets vertically
-    player.y = ((DISPLAY_HEIGHT / 2) - (RACKET_HEIGHT / 2)); 
-    computer.y = ((DISPLAY_HEIGHT / 2) - (RACKET_HEIGHT / 2));
+    Ball ball;
+    set_ball(&ball);
 
-    player.vel = 10;
-    computer.vel = 10;
-    
     al_start_timer(timer);
 
     while(1) {
@@ -63,16 +82,18 @@ int main() {
             // White Background
             al_clear_to_color(al_map_rgb(255, 255, 255));
             
-            // Draw Rackets
+            // Draw Rackets and Ball
             al_draw_filled_rectangle(player.x, player.y, (player.x + RACKET_WIDTH), (player.y + RACKET_HEIGHT), al_map_rgb(0, 0, 0));
             al_draw_filled_rectangle(computer.x, computer.y, (computer.x + RACKET_WIDTH), (computer.y + RACKET_HEIGHT), al_map_rgb(0, 0, 0));
-
+            
+            al_draw_filled_rectangle(ball.x, ball.y, (ball.x + BALL_SIZE), (ball.y + BALL_SIZE), al_map_rgb(0,0,0));
+                
             
             // Randomly decides if computer will move
-            bool comp_move = rand() % 11 == 1 ? true : false;
+            bool comp_move = rand() % 10 == 1 ? true : false;
             if (comp_move) change_dir(&computer);
 
-            // Check Colision
+            // Check Colision (Rackets + Screen)
             if ((player.y == 0 && player.vel < 0) || ((player.y + RACKET_HEIGHT == DISPLAY_HEIGHT)) && player.vel > 0) {
                 change_dir(&player);
             }
@@ -80,10 +101,39 @@ int main() {
             if ((computer.y == 0 && computer.vel < 0) || ((computer.y + RACKET_HEIGHT == DISPLAY_HEIGHT)) && computer.vel > 0) {
                 change_dir(&computer);
             }
+
+            // Check Colision (Ball + Screen)
+            if (ball.y == 0 || ball.y + BALL_SIZE == DISPLAY_HEIGHT) {
+                change_y_dir(&ball);
+            }
+
+            // Check Colision (Ball + Racket) and Check if Point
+            if (ball.x == 0 + RACKET_WIDTH) {
+                if (ball.y >= player.y && ball.y + BALL_SIZE <= player.y + RACKET_HEIGHT) {
+                    change_x_dir(&ball);
+                }
+            }
+
+            if (ball.x + BALL_SIZE == DISPLAY_WIDTH - RACKET_WIDTH) {
+                if (ball.y >= computer.y && ball.y + BALL_SIZE <= computer.y + RACKET_HEIGHT) {
+                    change_x_dir(&ball);
+                }
+            }
+
+            if (ball.x == 0) {
+                set_ball(&ball);
+                set_racket(&player, true);
+                set_racket(&computer, false);
+            } else if (ball.x + BALL_SIZE == DISPLAY_WIDTH) {
+                set_ball(&ball);         
+                set_racket(&player, true);
+                set_racket(&computer, false);
+            } 
             
-            // Move Rackets
+            // Move Rackets and Ball
             move_racket(&player);
             move_racket(&computer);
+            move_ball(&ball);
 
             al_flip_display();
 
