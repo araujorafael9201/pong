@@ -1,6 +1,8 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_primitives.h>
-#include <stdlib.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
+#include <string.h>
 #include "utils.h"
 
 int RACKET_WIDTH = 20;
@@ -14,8 +16,10 @@ int DISPLAY_HEIGHT = 500;
 int FRAMERATE = 20;
 
 void set_ball(Ball *ball) {
+    // Centralizes Ball
     ball->x = (DISPLAY_WIDTH / 2) - (BALL_SIZE / 2);
     ball->y = (DISPLAY_HEIGHT /2) - (BALL_SIZE / 2);
+    // Gives Ball a random initial direction
     ball->vel_x = (rand() % 2) == 1 ? 10 : -10;
     ball->vel_y = (rand() % 2) == 1 ? 10 : -10;
 }
@@ -34,17 +38,24 @@ void set_racket(Racket *racket, bool is_player) {
 }
 
 int main() {
-    
     // Initialize rand()
     srand(time(NULL));
 
     al_init();
     al_init_primitives_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
     al_install_keyboard();
+
+    int player_score = 0;
+    int computer_score = 0;
+
+    char *score_str;
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     ALLEGRO_DISPLAY* display = al_create_display(DISPLAY_WIDTH, DISPLAY_HEIGHT);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FRAMERATE);
+    ALLEGRO_FONT* font = al_load_font("assets/font.ttf", 60, 0);
 
     al_register_event_source(queue, al_get_display_event_source(display));
     al_register_event_source(queue, al_get_timer_event_source(timer));
@@ -87,7 +98,20 @@ int main() {
             al_draw_filled_rectangle(computer.x, computer.y, (computer.x + RACKET_WIDTH), (computer.y + RACKET_HEIGHT), al_map_rgb(0, 0, 0));
             
             al_draw_filled_rectangle(ball.x, ball.y, (ball.x + BALL_SIZE), (ball.y + BALL_SIZE), al_map_rgb(0,0,0));
-                
+            
+            // Draw Score on Screen
+            // Convert Points (int) to char
+            char player_score_char[2] = {player_score + '0', *"\0"};
+            char computer_score_char[2] = {computer_score + '0', *"\0"};
+
+            // Makes string (player_score x computer_score) 
+            strcat(score_str, player_score_char);
+            strcat(score_str, "x");
+            strcat(score_str, computer_score_char);
+            
+            // Calculates size of the score text in order to centralize it on screen
+            int score_text_size = al_get_text_width(font, score_str);
+            al_draw_text(font, al_map_rgb(0,0,0), (DISPLAY_WIDTH / 2) - (score_text_size / 2), 20, 0, score_str);
             
             // Randomly decides if computer will move
             bool comp_move = rand() % 10 == 1 ? true : false;
@@ -121,10 +145,12 @@ int main() {
             }
 
             if (ball.x == 0) {
+                computer_score += 1;
                 set_ball(&ball);
                 set_racket(&player, true);
                 set_racket(&computer, false);
             } else if (ball.x + BALL_SIZE == DISPLAY_WIDTH) {
+                player_score += 1;
                 set_ball(&ball);         
                 set_racket(&player, true);
                 set_racket(&computer, false);
@@ -138,13 +164,18 @@ int main() {
             al_flip_display();
 
             redraw = false;
+           
+            // Check if game is over (Someone reached 10 points)
+            if (player_score == 10 || computer_score == 10) {
+                break;
+            }
         }
     }
 
     al_destroy_display(display);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
-
+    al_destroy_font(font);
 
     return 0;
 }
