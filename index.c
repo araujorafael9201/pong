@@ -1,14 +1,23 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_primitives.h>
+#include "utils.h"
 
 int main() {
+
+    int RACKET_WIDTH = 20;
+    int RACKET_HEIGHT = 150;
+
+    int DISPLAY_WIDTH = 600;
+    int DISPLAY_HEIGHT = 600;
 
     int FRAMERATE = 30;
 
     al_init();
+    al_init_primitives_addon();
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
-    ALLEGRO_DISPLAY* display = al_create_display(600, 600);
+    ALLEGRO_DISPLAY* display = al_create_display(DISPLAY_WIDTH, DISPLAY_HEIGHT);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FRAMERATE);
     ALLEGRO_FONT* font = al_create_builtin_font();
 
@@ -20,6 +29,16 @@ int main() {
     bool redraw = true;
 
     al_start_timer(timer);
+
+    Racket player, computer;
+    player.x = 0;
+    // Puts Racket on the Right side of the screen
+    computer.x = (DISPLAY_WIDTH - RACKET_WIDTH);
+    
+    // Centralizes Rackets vertically
+    player.y = ((DISPLAY_HEIGHT / 2) - (RACKET_HEIGHT / 2)); 
+    computer.y = ((DISPLAY_HEIGHT / 2) - (RACKET_HEIGHT / 2));
+
     while(1) {
         al_wait_for_event(queue, &e);
         if (e.type == ALLEGRO_EVENT_TIMER) {
@@ -28,21 +47,15 @@ int main() {
             break;
         }
 
-/*         switch (e.type) { */
-/*             case ALLEGRO_EVENT_TIMER: */
-/*                 redraw = true; */
-
-/*             case ALLEGRO_EVENT_DISPLAY_CLOSE: */
-/*                 printf("Fechando..."); */
-/*                 break; */
-/*             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: */
-/*                 printf("Apertou o Mouse!"); */
-/*         } */
-
 
         if (redraw && al_is_event_queue_empty(queue)) {
+            // White Background
             al_clear_to_color(al_map_rgb(255, 255, 255));
-            al_draw_text(font, al_map_rgb(0, 0, 0), 10, 10, 0, "Hello, World!");
+            
+            // Draw Rackets
+            al_draw_filled_rectangle(player.x, player.y, (player.x + RACKET_WIDTH), (player.y + RACKET_HEIGHT), al_map_rgb(0, 0, 0));
+            al_draw_filled_rectangle(computer.x, computer.y, (computer.x + RACKET_WIDTH), (computer.y + RACKET_HEIGHT), al_map_rgb(0, 0, 0));
+
             al_flip_display();
 
             redraw = false;
