@@ -2,7 +2,7 @@ typedef struct {
     int x;
     int y;
 
-    // 1 for UP, -1 for DOWN
+    // Negative vel for UP, Positive vel for DOWN
     int vel;
 } Racket;
 
@@ -10,15 +10,16 @@ typedef struct {
     int x;
     int y;
 
-    // 1 for RIGHT, -1 for LEFT
+    // Negative vel_x for LEFT, Positive vel_x for RIGHT
     int vel_x;
 
-    // 1 for UP, -1 for DOWN
-    //
+    // Negative vel_y for UP, Positive vel_y for DOWN
     int vel_y;
 } Ball;
 
 
-void change_dir(Racket r);
+void change_dir(Racket *r);
 void change_x_dir(Ball b);
 void change_y_dir(Ball b);
+void move_racket(Racket *r);
+void move_ball(Ball b);
